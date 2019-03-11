@@ -14,18 +14,38 @@ router.get('/', authorize([Role.Admin, Role.TL]), getAll); // admin only
 router.get('/:id', authorize(), getById);       // all authenticated users
 router.post('/register', register);
 
+
 module.exports = router;
 
 
 
 function register(req, res, next) {
-    var sql = "INSERT INTO users ( username, password, firstName, lastName, role) VALUES ?";
-    var values = [[req.body.username, bcrypt.hashSync(req.body.password, 10), req.body.firstName, req.body.lastName, req.body.role]];
+    var sql = "INSERT INTO users ( username, password, firstName, lastName, email, idBoss) VALUES ?";
+    var values = [[req.body.username, bcrypt.hashSync(req.body.password, 10), req.body.firstName, req.body.lastName, req.body.email, req.body.idBoss]];
     console.log(values);
-    db.query(sql, [values], function (err, result) {
+    db.query(sql, [values], function (err, results) {
 
-        if (err) {res.err;  }
-        else res.json(result);
+        if (err) {
+            res.err
+        }
+        else {
+            if (results.length > 0) {
+                db.query(sql, [values], function (err, result) {
+
+                    if (err) {
+                        res.err
+                    }
+                    else {
+                
+            
+                        res.json(result);
+                    }
+                });
+            }
+            
+
+            res.json(result);
+        }
     });
 }
 
@@ -34,9 +54,9 @@ function register(req, res, next) {
 async function authenticate(req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
-    db.query('SELECT * FROM users WHERE username = ?', [username], function (error, results, fields) {
+    db.query('SELECT u.idUser, u.username, u.firstname, u.lastname, u.email, u.password, u.idBoss, r.role FROM users u join user_has_role ur on (ur.idUser = u.idUser) join roles r on(r.idRole = ur.idRole) where u.username = ?;', [username], function (error, results, fields) {
         if (error) {
-          return  res.json({
+            return res.json({
                 status: false,
                 message: 'there are some error with query'
             })
@@ -52,7 +72,7 @@ async function authenticate(req, res, next) {
                     })
 
                 } else {
-                   return res.json({
+                    return res.json({
                         status: false,
                         message: "name and password does not match"
                     });
@@ -60,7 +80,7 @@ async function authenticate(req, res, next) {
 
             }
             else {
-              return  res.json({
+                return res.json({
                     status: false,
                     message: "name does not exits"
                 });
@@ -71,7 +91,7 @@ async function authenticate(req, res, next) {
 
 
 function getAll(req, res, next) {
-    db.query('select * from users ', (err, rows, fields) => {
+    db.query('SELECT u.idUser, u.username, u.firstname, u.lastname, u.email, u.password, u.idBoss, r.role FROM users u join user_has_role ur on (ur.idUser = u.idUser) join roles r on(r.idRole = ur.idRole);  ', (err, rows, fields) => {
         if (!err)
             res.send(rows);
         else
@@ -81,9 +101,8 @@ function getAll(req, res, next) {
 
 
 function getById(req, res, next) {
-
     var id = parseInt(req.params.id);
-    db.query('SELECT * FROM users WHERE id = ?', [id], function (error, results, fields) {
+    db.query('SELECT u.idUser, u.username, u.firstname, u.lastname, u.email, u.password, u.idBoss, r.role FROM users u join user_has_role ur on (ur.idUser = u.idUser) join roles r on(r.idRole = ur.idRole) where u.idUser = ?;', [id], function (error, results, fields) {
         if (!error)
             return res.send(results[0]);
         else

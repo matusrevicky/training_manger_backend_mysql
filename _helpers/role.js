@@ -1,6 +1,8 @@
 module.exports = {
-    Admin: 'Admin',
     User: 'User',
-    TL: 'TL'
-
+    Admin: 'Admin',
+    Approver1: 'Approver1',
+    Approver2: 'Approver2',
+    Approver3: 'Approver3',
+    Procurement: 'Procurement'
 }

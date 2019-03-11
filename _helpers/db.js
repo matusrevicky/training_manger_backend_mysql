@@ -5,7 +5,8 @@ var mysqlConnection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'role_based_login',
+   // database: 'role_based_login',
+   database: 'training_managment',
     multipleStatements: true
 });
 
