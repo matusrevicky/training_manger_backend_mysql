@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const trainingService = require('./training.service');
+
 const authorize = require('_helpers/authorize')
 const Role = require('_helpers/role');
 const db = require('_helpers/db');
 // routes
 router.get('/',authorize([Role.Admin, Role.TL]),  getAllTrainings);
-router.get('/:id',authorize([Role.Admin]),  getTrainingById);
-router.post('/',authorize([Role.Admin]),  createTraining);
+//router.get('/:id',authorize([Role.Admin]),  getTrainingById);
+//router.post('/',authorize([Role.Admin]),  createTraining);
 
 
 module.exports = router;
@@ -22,6 +22,7 @@ function getAllTrainings(req, res, next) {
 
 }
 
+/*
 function createTraining(req, res, next) {
     trainingService.createTraining(req.body)
     .then(training => training ? res.json(training) : res.status(400).json({ message: 'MSG' }))
@@ -40,4 +41,4 @@ function getTrainingById(req, res, next) {
     trainingService.getTrainingById(req.params.id)
         .then(training => training ? res.json(training) : res.sendStatus(404))
         .catch(err => next(err));
-}
+}*/
