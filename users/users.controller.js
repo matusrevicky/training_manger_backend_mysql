@@ -10,10 +10,10 @@ const config = require('config.json');
 
 // routes
 router.post('/authenticate', authenticate);     // public route
-router.get('/', authorize([Role.Admin, Role.TL]), getAll); // admin only
+router.get('/', authorize(), getAll); // admin only
 router.get('/:id', authorize(), getById);       // all authenticated users
 router.post('/register', register);
-
+router.get('/substitute/:id', authorize(),  getSubstitute);  
 
 module.exports = router;
 
@@ -105,6 +105,17 @@ function getById(req, res, next) {
     db.query('SELECT u.idUser, u.username, u.firstname, u.lastname, u.email, u.password, u.idBoss, r.role FROM users u join user_has_role ur on (ur.idUser = u.idUser) join roles r on(r.idRole = ur.idRole) where u.idUser = ?;', [id], function (error, results, fields) {
         if (!error)
             return res.send(results[0]);
+        else
+            console.log(error);
+    })
+}
+
+
+function getSubstitute(req, res, next) {
+    var id = parseInt(req.params.id);
+    db.query('select idUser, idSubstitute from user_has_substitute where idSubstitute = ?;', [id], function (error, results, fields) {
+        if (!error)
+            return res.send(results);
         else
             console.log(error);
     })
