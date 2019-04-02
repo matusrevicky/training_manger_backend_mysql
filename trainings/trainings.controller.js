@@ -7,14 +7,17 @@ const Approvals = require('_helpers/approvals');
 const db = require('_helpers/db');
 
 // routes
-router.get('/', authorize(), getAllTrainings);
-router.get('/:id', authorize(), getMyTrainings);
+router.get('/all/:id', authorize(), getAllTrainings);
+router.get('/:id',  getMyTrainings);
 router.get('/employeeTrainings/:id', getEmployeeTrainings);
 router.post('/bindwithuser/:id', authorize(), bindUserWithTraining);
 router.post('/acceptUserTraining/:id/:role', authorize(), acceptUserTraining);
 router.post('/denyUserTraining/:id/:role', authorize(), denyUserTraining);
 //router.get('/:id',authorize([Role.Admin]),  getTrainingById);
-router.post('/', authorize(), createTraining);
+router.post('/',authorize(), createTraining);
+router.post('/provider', authorize(), createProvider);
+router.post('/cluster', authorize(), createCluster);
+router.get('/cluster/clusters', getClusters);
 
 module.exports = router;
 
@@ -117,7 +120,10 @@ function bindUserWithTraining(req, res, next) {
 }
 
 function getAllTrainings(req, res, next) {
-    db.query('SELECT t.idTraining, t.name, c.name as clustername, tp.Price as price, p.name as providername, tp.idProvider, tc.idCluster from trainings t join trainings_has_clusters tc on(t.idTraining = tc.idTraining) join clusters c on(c.idCluster = tc.idCluster) join trainings_has_providers tp on (t.idTraining = tp.idTraining) join providers p on (p.idProvider = tp.idProvider) ; ', (err, rows, fields) => {
+    var sql = 'SELECT case when t.idTraining in (select idTraining from user_has_training where idUser = ?)  then 1 else 0 end as isMy, t.idTraining, t.name, c.name as clustername, tp.Price as price, p.name as providername, tp.idProvider, tc.idCluster from trainings t join trainings_has_clusters tc on(t.idTraining = tc.idTraining) join clusters c on(c.idCluster = tc.idCluster) join trainings_has_providers tp on (t.idTraining = tp.idTraining) join providers p on (p.idProvider = tp.idProvider);';
+    var idCurrentUser = parseInt(req.params.id);
+
+    db.query(sql, idCurrentUser, (err, rows, fields) => {
         if (!err)
             res.send(rows);
         else
@@ -129,7 +135,7 @@ function getAllTrainings(req, res, next) {
 // returns list of my trainings (current user id)
 function getMyTrainings(req, res, next) {
     var idCurrentUser = parseInt(req.params.id);
-    db.query('select t.name training, u.idUser, u.firstName, u.lastName, p.name provider, c.name cluster, ut.trainingStatus as status, tp.price  from user_has_training ut join providers p on(ut.idProvider = p.idProvider) join clusters c on (c.idCluster = ut.idCluster ) join trainings t on (t.idTraining = ut.idTraining) join users u on (ut.idUser = u.idUser) join trainings_has_providers tp on (tp.idProvider = ut.idProvider and tp.idTraining = ut.idTraining ) where u.idUser = ?;    ', idCurrentUser, (err, rows, fields) => {
+    db.query('select t.name name, u.idUser, u.firstName, u.lastName, p.name provider, c.name cluster, ut.trainingStatus as status, tp.price  from user_has_training ut join providers p on(ut.idProvider = p.idProvider) join clusters c on (c.idCluster = ut.idCluster ) join trainings t on (t.idTraining = ut.idTraining) join users u on (ut.idUser = u.idUser) join trainings_has_providers tp on (tp.idProvider = ut.idProvider and tp.idTraining = ut.idTraining ) where u.idUser = ?;    ', idCurrentUser, (err, rows, fields) => {
         if (!err)
             res.send(rows);
         else
@@ -165,6 +171,40 @@ function createTraining(req, res, next) {
     })
 }
 
+function createProvider(req, res, next) {
+    var name = req.body.name;
+    var sql = "INSERT INTO providers(name) VALUES(?)";
+    db.query(sql, [name], (err, rows, fields) => {
+        if (!err)
+            res.send(rows);
+        else
+            console.log(err);
+    })
+}
+
+function createCluster(req, res, next) {
+    var name = req.body.name;
+    var sql = "INSERT INTO clusters(name) VALUES(?)";
+    db.query(sql, [name], (err, rows, fields) => {
+        if (!err)
+            res.send(rows);
+        else
+            console.log(err);
+    })
+}
+
+function getClusters(req, res, next) {
+    var sql = 'select idCluster, name from clusters;';
+   
+
+    db.query(sql, (err, rows, fields) => {
+        if (!err)
+            res.send(rows);
+        else
+            console.log(err);
+    })
+
+}
 /*
 function getTrainingById(req, res, next) {
     const currentTraining = req.training;
